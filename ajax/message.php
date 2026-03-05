@@ -1,10 +1,26 @@
 <?
-    session_start();
-	include("../settings/connect_datebase.php");
+    include("../settings/connect_datebase.php");
 
-    $IdUser = $_SESSION['user'];
-    $Message = $_POST["Message"];
-    $IdPost = $_POST["IdPost"];
+    if (!isset($_COOKIE['user_id']) || !isset($_COOKIE['user_token'])) {
+        die("Доступ запрещен");
+    }
 
-    $mysqli->query("INSERT INTO `comments`(`IdUser`, `IdPost`, `Messages`) VALUES ({$IdUser}, {$IdPost}, '{$Message}');");
+    $c_id = $_COOKIE['user_id'];
+    $c_token = $_COOKIE['user_token'];
+
+    if ($c_token !== md5($c_id . "secret_salt_123")) {
+        die("Неверный токен");
+    }
+
+    $IdUser = intval($c_id);
+    $Message = $mysqli->real_escape_string($_POST["Message"]);
+    $IdPost = intval($_POST["IdPost"]);
+
+    $sql = "INSERT INTO `comments`(`IdUser`, `IdPost`, `Messages`) VALUES ($IdUser, $IdPost, '$Message')";
+
+    if($mysqli->query($sql)) {
+        echo "success";
+    } else {
+        echo "Ошибка БД: " . $mysqli->error;
+    }
 ?>

@@ -1,17 +1,22 @@
 <?php
-	session_start();
-	include("./settings/connect_datebase.php");
-	
-	if (isset($_SESSION['user'])) {
-		if($_SESSION['user'] != -1) {
-			
-			$user_query = $mysqli->query("SELECT * FROM `users` WHERE `id` = ".$_SESSION['user']);
-			while($user_read = $user_query->fetch_row()) {
-				if($user_read[3] == 0) header("Location: user.php");
-				else if($user_read[3] == 1) header("Location: admin.php");
-			}
-		}
- 	}
+    include("./settings/connect_datebase.php");
+    
+    $is_authorized = false;
+    
+    if (isset($_COOKIE['user_id']) && isset($_COOKIE['user_token'])) {
+        $c_id = $_COOKIE['user_id'];
+        $c_token = $_COOKIE['user_token'];
+        
+        if ($c_token === md5($c_id . "secret_salt_123")) {
+            $is_authorized = true;
+            
+            $user_query = $mysqli->query("SELECT * FROM `users` WHERE `id` = " . intval($c_id));
+            if($user_read = $user_query->fetch_row()) {
+                if($user_read[3] == 0) header("Location: user.php");
+                else if($user_read[3] == 1) header("Location: admin.php");
+            }
+        }
+    }
 ?>
 <html>
 	<head> 
@@ -56,7 +61,7 @@
 			</div>
 		</div>
 		
-		<script>
+				<script>
 			function LogIn() {
 				var loading = document.getElementsByClassName("loading")[0];
 				var button = document.getElementsByClassName("button")[0];
@@ -83,19 +88,16 @@
 					contentType : false, 
 					// функция успешного ответа сервера
 					success: function (_data) {
-						console.log("Авторизация прошла успешно, id: " +_data);
-						if(_data == "") {
+						if(_data.trim() == "") { // Добавьте trim() для надежности
 							loading.style.display = "none";
 							button.className = "button";
 							alert("Логин или пароль не верный.");
 						} else {
-							localStorage.setItem("token", _data);
-							location.reload();
-							loading.style.display = "none";
-							button.className = "button";
+							// Куки уже установлены сервером в login_user.php
+							location.href = "user.php"; // Перенаправляем на главную
 						}
 					},
-					// функция ошибки
+										// функция ошибки
 					error: function( ){
 						console.log('Системная ошибка!');
 						loading.style.display = "none";

@@ -1,17 +1,18 @@
 <?php
-	session_start();
-	include("./settings/connect_datebase.php");
-	
-	if (isset($_SESSION['user'])) {
-		if($_SESSION['user'] != -1) {
-			
-			$user_query = $mysqli->query("SELECT * FROM `users` WHERE `id` = ".$_SESSION['user']);
-			while($user_read = $user_query->fetch_row()) {
-				if($user_read[3] == 0) header("Location: user.php");
-				else if($user_read[3] == 1) header("Location: admin.php");
-			}
-		}
- 	}
+    include("./settings/connect_datebase.php");
+    if (isset($_COOKIE['user_id']) && isset($_COOKIE['user_token'])) {
+        $c_id = intval($_COOKIE['user_id']);
+        $c_token = $_COOKIE['user_token'];
+        
+        if ($c_token === md5($c_id . "secret_salt_123")) {
+            $user_query = $mysqli->query("SELECT role FROM `users` WHERE `id` = " . $c_id);
+            if($user_read = $user_query->fetch_assoc()) {
+                if($user_read['role'] == 0) header("Location: user.php");
+                else if($user_read['role'] == 1) header("Location: admin.php");
+                exit();
+            }
+        }
+    }
 ?>
 <html>
 	<head> 
@@ -76,31 +77,26 @@
 							data.append("login", _login);
 							data.append("password", _password);
 							
-							// AJAX запрос
 							$.ajax({
 								url         : 'ajax/regin_user.php',
 								type        : 'POST', // важно!
 								data        : data,
 								cache       : false,
 								dataType    : 'html',
-								// отключаем обработку передаваемых данных, пусть передаются как есть
 								processData : false,
-								// отключаем установку заголовка типа запроса. Так jQuery скажет серверу что это строковой запрос
 								contentType : false, 
-								// функция успешного ответа сервера
 								success: function (_data) {
-									console.log("Авторизация прошла успешно, id: " +_data);
+									console.log("Ответ сервера: " + _data);
+									
 									if(_data == -1) {
-										alert("Пользователь с таким логином существует.");
+										alert("Ошибка: Пользователь с таким логином уже существует или данные неверны.");
 										loading.style.display = "none";
 										button.className = "button";
 									} else {
-										location.reload();
-										loading.style.display = "none";
-										button.className = "button";
+										alert("Регистрация успешна!");
+										window.location.href = "user.php"; 
 									}
 								},
-								// функция ошибки
 								error: function( ){
 									console.log('Системная ошибка!');
 									loading.style.display = "none";

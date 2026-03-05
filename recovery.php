@@ -1,16 +1,18 @@
 <?php
-	session_start();
-	if (isset($_SESSION['user'])) {
-		if($_SESSION['user'] != -1) {
-			include("./settings/connect_datebase.php");
-			
-			$user_query = $mysqli->query("SELECT * FROM `users` WHERE `id` = ".$_SESSION['user']);
-			while($user_read = $user_query->fetch_row()) {
-				if($user_read[3] == 0) header("Location: user.php");
-				else if($user_read[3] == 1) header("Location: admin.php");
-			}
-		}
- 	}
+    include("./settings/connect_datebase.php");
+    if (isset($_COOKIE['user_id']) && isset($_COOKIE['user_token'])) {
+        $c_id = intval($_COOKIE['user_id']);
+        $c_token = $_COOKIE['user_token'];
+        
+        if ($c_token === md5($c_id . "secret_salt_123")) {
+            $user_query = $mysqli->query("SELECT role FROM `users` WHERE `id` = " . $c_id);
+            if($user_read = $user_query->fetch_assoc()) {
+                if($user_read['role'] == 0) header("Location: user.php");
+                else if($user_read['role'] == 1) header("Location: admin.php");
+                exit();
+            }
+        }
+    }
 ?>
 <!DOCTYPE HTML>
 <html>
