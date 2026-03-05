@@ -16,13 +16,13 @@
 	setcookie("IP", $user_ip, [
         'expires' => time() + 3600,
         'path' => '/',
-        'secure' => false, # Передача только по HTTPS
+        'secure' => true, # Передача только по HTTPS
         'httponly' => true # Недоступность для JS
     ]);
     setcookie("Datetime", date("Y-m-d H:i:s"), [
         'expires' => time() + 3600,
         'path' => '/',
-        'secure' => false, # Передача только по HTTPS
+        'secure' => true, # Передача только по HTTPS
         'httponly' => true # Недоступность для JS
     ]);
 ?>
